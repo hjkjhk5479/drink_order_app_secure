@@ -172,7 +172,11 @@ async function loadStores() {
     return;
   }
 
-  storeEl.innerHTML = stores
+
+
+  storeEl.innerHTML =
+  `<option value="">請選擇店家</option>` +
+  stores
     .map(store => {
       return `
         <option value="${store.id}">
@@ -182,8 +186,18 @@ async function loadStores() {
     })
     .join("");
 
-  await loadProducts(storeEl.value);
-  await loadToppings(storeEl.value);
+productEl.innerHTML =
+  `<option value="">請先選擇店家</option>`;
+
+sizeEl.innerHTML =
+  `<option value="" data-price="0">請先選擇飲料</option>`;
+
+toppingEl.innerHTML =
+  `<option value="" data-price="0">不加料</option>`;
+
+totalEl.textContent = "$0";
+
+
 }
 
 async function loadProducts(storeId) {
@@ -236,7 +250,9 @@ async function loadProducts(storeId) {
     return;
   }
 
-  productEl.innerHTML = products
+  productEl.innerHTML =
+  `<option value="">請選擇飲料</option>` +
+  products
     .map(product => {
       return `
         <option value="${product.id}">
@@ -247,7 +263,10 @@ async function loadProducts(storeId) {
     })
     .join("");
 
-  updateSizeOptions();
+sizeEl.innerHTML =
+  `<option value="" data-price="0">請先選擇飲料</option>`;
+
+updateTotal();
 }
 
 async function loadToppings(storeId) {
@@ -345,9 +364,27 @@ function updateTotal() {
     `$${total}`;
 }
 
+
+
 storeEl.addEventListener(
   "change",
   async () => {
+
+    if (!storeEl.value) {
+
+      productEl.innerHTML =
+        `<option value="">請先選擇店家</option>`;
+
+      sizeEl.innerHTML =
+        `<option value="" data-price="0">請先選擇飲料</option>`;
+
+      toppingEl.innerHTML =
+        `<option value="" data-price="0">不加料</option>`;
+
+      totalEl.textContent = "$0";
+
+      return;
+    }
 
     await loadProducts(
       storeEl.value
@@ -359,6 +396,7 @@ storeEl.addEventListener(
 
   }
 );
+
 
 productEl.addEventListener(
   "change",
@@ -430,12 +468,56 @@ document
         );
       }
 
-      if (!productEl.value) {
-        return showMessage(
-          "目前沒有可訂購的飲料",
-          "err"
-        );
-      }
+      // =========================
+// 基本檢查
+// =========================
+
+if (!name) {
+  return showMessage(
+    "請輸入訂購人姓名",
+    "err"
+  );
+}
+
+// 沒選店家
+if (!storeEl.value) {
+  return showMessage(
+    "請選擇店家",
+    "err"
+  );
+}
+
+// 沒選飲料
+if (!productEl.value) {
+  return showMessage(
+    "請選擇飲料",
+    "err"
+  );
+}
+
+// 沒選尺寸
+if (!sizeEl.value) {
+  return showMessage(
+    "請選擇尺寸",
+    "err"
+  );
+}
+
+// 沒選甜度
+if (!sugar) {
+  return showMessage(
+    "請選擇甜度",
+    "err"
+  );
+}
+
+// 沒選冰塊
+if (!ice) {
+  return showMessage(
+    "請選擇冰塊",
+    "err"
+  );
+}
 
       const product =
         products.find(
