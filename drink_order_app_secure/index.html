@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>飲料訂購</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="topnav">
+      <h1>🧋 飲料訂購</h1>
+    </div>
+
+    <div class="card">
+      <div class="grid">
+        <div>
+          <label for="name">訂購人</label>
+          <input id="name" placeholder="請輸入姓名" />
+        </div>
+
+        <div>
+          <label for="store">店家</label>
+          <select id="store"></select>
+        </div>
+
+        <div>
+          <label for="product">飲料品項</label>
+          <select id="product"></select>
+        </div>
+
+        <div>
+          <label for="size">尺寸 / 價格</label>
+          <select id="size"></select>
+        </div>
+
+        <div>
+          <label for="quantity">杯數</label>
+          <input id="quantity" type="number" min="1" value="1" />
+        </div>
+
+        <div>
+          <label for="sugar">甜度</label>
+          <select id="sugar">
+            <option>正常糖</option>
+            <option>少糖</option>
+            <option>半糖</option>
+            <option>微糖</option>
+            <option>一分糖</option>
+            <option>無糖</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="ice">冰塊</label>
+          <select id="ice">
+            <option>正常冰</option>
+            <option>少冰</option>
+            <option>微冰</option>
+            <option>去冰</option>
+            <option>常溫</option>
+            <option>熱</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="topping">加料</label>
+          <select id="topping">
+            <option value="" data-price="0">不加料</option>
+          </select>
+        </div>
+
+        <div>
+          <label>預估金額</label>
+          <div class="total" id="total">$0</div>
+        </div>
+
+        <div class="full">
+          <label for="note">備註</label>
+          <textarea id="note" placeholder="例如：飲料分開裝、特殊需求"></textarea>
+        </div>
+
+        <div class="full">
+          <button id="submitBtn">送出訂單</button>
+          <div id="message" class="message"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
