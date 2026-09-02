@@ -3,7 +3,10 @@ const supabaseClient = supabase.createClient(
   window.SUPABASE_ANON_KEY
 );
 
-const storeEl = document.getElementById("store");
+const storeEl =
+  document.getElementById("store");
+const storeLogoEl =
+  document.getElementById("storeLogo");
 const productEl = document.getElementById("product");
 const sizeEl = document.getElementById("size");
 const toppingEl = document.getElementById("topping");
@@ -139,7 +142,9 @@ function updateSizeOptions() {
 async function loadStores() {
   const { data, error } = await supabaseClient
     .from("stores")
-    .select("id,name,active,sort_order")
+    .select(
+      "id,name,active,sort_order,logo_url"
+    )
     .eq("active", true)
     .order("sort_order", {
       ascending: true
@@ -370,6 +375,8 @@ storeEl.addEventListener(
   "change",
   async () => {
 
+    updateStoreLogo();
+
     if (!storeEl.value) {
 
       productEl.innerHTML =
@@ -457,16 +464,6 @@ document
           Number(qtyEl.value || 1)
         );
 
-      // =========================
-      // 基本檢查
-      // =========================
-
-      if (!name) {
-        return showMessage(
-          "請輸入訂購人姓名",
-          "err"
-        );
-      }
 
       // =========================
       // 基本檢查
@@ -753,5 +750,26 @@ document
 
     }
   );
+
+function updateStoreLogo() {
+
+  const store = stores.find(
+    s =>
+      String(s.id) ===
+      String(storeEl.value)
+  );
+
+  if (!store || !store.logo_url) {
+
+    storeLogoEl.src = "";
+    storeLogoEl.style.display = "none";
+
+    return;
+  }
+
+  storeLogoEl.src = store.logo_url;
+  storeLogoEl.alt = store.name + " Logo";
+  storeLogoEl.style.display = "block";
+}
 
 loadStores();
