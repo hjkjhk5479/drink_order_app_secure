@@ -175,27 +175,27 @@ async function loadStores() {
 
 
   storeEl.innerHTML =
-  `<option value="">請選擇店家</option>` +
-  stores
-    .map(store => {
-      return `
+    `<option value="">請選擇店家</option>` +
+    stores
+      .map(store => {
+        return `
         <option value="${store.id}">
           ${escapeHtml(store.name)}
         </option>
       `;
-    })
-    .join("");
+      })
+      .join("");
 
-productEl.innerHTML =
-  `<option value="">請先選擇店家</option>`;
+  productEl.innerHTML =
+    `<option value="">請先選擇店家</option>`;
 
-sizeEl.innerHTML =
-  `<option value="" data-price="0">請先選擇飲料</option>`;
+  sizeEl.innerHTML =
+    `<option value="" data-price="0">請先選擇飲料</option>`;
 
-toppingEl.innerHTML =
-  `<option value="" data-price="0">不加料</option>`;
+  toppingEl.innerHTML =
+    `<option value="" data-price="0">不加料</option>`;
 
-totalEl.textContent = "$0";
+  totalEl.textContent = "$0";
 
 
 }
@@ -251,22 +251,22 @@ async function loadProducts(storeId) {
   }
 
   productEl.innerHTML =
-  `<option value="">請選擇飲料</option>` +
-  products
-    .map(product => {
-      return `
+    `<option value="">請選擇飲料</option>` +
+    products
+      .map(product => {
+        return `
         <option value="${product.id}">
           ${escapeHtml(product.name)}
           ｜${getProductPriceText(product)}
         </option>
       `;
-    })
-    .join("");
+      })
+      .join("");
 
-sizeEl.innerHTML =
-  `<option value="" data-price="0">請先選擇飲料</option>`;
+  sizeEl.innerHTML =
+    `<option value="" data-price="0">請先選擇飲料</option>`;
 
-updateTotal();
+  updateTotal();
 }
 
 async function loadToppings(storeId) {
@@ -335,7 +335,7 @@ function updateTotal() {
 
   const toppingOption =
     toppingEl.options[
-      toppingEl.selectedIndex
+    toppingEl.selectedIndex
     ];
 
   const productPrice =
@@ -469,55 +469,55 @@ document
       }
 
       // =========================
-// 基本檢查
-// =========================
+      // 基本檢查
+      // =========================
 
-if (!name) {
-  return showMessage(
-    "請輸入訂購人姓名",
-    "err"
-  );
-}
+      if (!name) {
+        return showMessage(
+          "請輸入訂購人姓名",
+          "err"
+        );
+      }
 
-// 沒選店家
-if (!storeEl.value) {
-  return showMessage(
-    "請選擇店家",
-    "err"
-  );
-}
+      // 沒選店家
+      if (!storeEl.value) {
+        return showMessage(
+          "請選擇店家",
+          "err"
+        );
+      }
 
-// 沒選飲料
-if (!productEl.value) {
-  return showMessage(
-    "請選擇飲料",
-    "err"
-  );
-}
+      // 沒選飲料
+      if (!productEl.value) {
+        return showMessage(
+          "請選擇飲料",
+          "err"
+        );
+      }
 
-// 沒選尺寸
-if (!sizeEl.value) {
-  return showMessage(
-    "請選擇尺寸",
-    "err"
-  );
-}
+      // 沒選尺寸
+      if (!sizeEl.value) {
+        return showMessage(
+          "請選擇尺寸",
+          "err"
+        );
+      }
 
-// 沒選甜度
-if (!sugar) {
-  return showMessage(
-    "請選擇甜度",
-    "err"
-  );
-}
+      // 沒選甜度
+      if (!sugar) {
+        return showMessage(
+          "請選擇甜度",
+          "err"
+        );
+      }
 
-// 沒選冰塊
-if (!ice) {
-  return showMessage(
-    "請選擇冰塊",
-    "err"
-  );
-}
+      // 沒選冰塊
+      if (!ice) {
+        return showMessage(
+          "請選擇冰塊",
+          "err"
+        );
+      }
 
       const product =
         products.find(
@@ -542,7 +542,7 @@ if (!ice) {
 
       const sizeOption =
         sizeEl.options[
-          sizeEl.selectedIndex
+        sizeEl.selectedIndex
         ];
 
       const size =
@@ -578,7 +578,7 @@ if (!ice) {
       // 所以先把尺寸寫進飲料名稱
       const orderProductName =
         size &&
-        size !== "單一價"
+          size !== "單一價"
           ? `${product.name} (${size})`
           : product.name;
 

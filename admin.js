@@ -464,21 +464,15 @@ async function loadStoresAdmin() {
       return `
 
         <tr>
-
-          <td>
-            ${store.id}
-          </td>
-
           <td>
             ${escapeHtml(store.name)}
           </td>
 
           <td>
-            ${
-              store.active
-              ? "啟用"
-              : "停用"
-            }
+            ${store.active
+          ? "啟用"
+          : "停用"
+        }
           </td>
 
           <td>
@@ -502,11 +496,10 @@ async function loadStoresAdmin() {
       margin:0;
     "
   >
-    ${
-      store.active
-        ? "停用"
-        : "啟用"
-    }
+    ${store.active
+          ? "停用"
+          : "啟用"
+        }
   </button>
 
   <button
@@ -774,64 +767,82 @@ async function loadProductsAdmin(
       return `
 
         <tr>
-
-          <td>
-            ${product.id}
-          </td>
-
           <td>
             ${escapeHtml(
-              product.name
-            )}
+        product.name
+      )}
           </td>
 
           <td>
-            ${
-    product.price_m != null
-      ? "$" + product.price_m
-      : "-"
-  }
+            ${product.price_m != null
+          ? "$" + product.price_m
+          : "-"
+        }
 </td>
 
 <td>
-  ${
-    product.price_l != null
-      ? "$" + product.price_l
-      : (
-          product.price != null
-            ? "$" + product.price
-            : "-"
-        )
-  }
+  ${product.price_l != null
+          ? "$" + product.price_l
+          : (
+            product.price != null
+              ? "$" + product.price
+              : "-"
+          )
+        }
           </td>
 
           <td>
 
-            ${
-              product.active
-              ? "啟用"
-              : "停用"
-            }
+            ${product.active
+          ? "啟用"
+          : "停用"
+        }
 
           </td>
 
           <td>
 
-            <button
-              onclick="toggleProduct(
-                ${product.id},
-                ${product.active}
-              )"
-              style="width:auto;"
-            >
+            <div
+  style="
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    width:100%;
+  "
+>
 
-              ${
-                product.active
-                  ? "停用"
-                  : "啟用"
-              }
+  <button
+    onclick="toggleProduct(
+      ${product.id},
+      ${product.active}
+    )"
+    style="
+      width:100%;
+      margin:0;
+    "
+  >
+    ${product.active
+          ? "停用"
+          : "啟用"
+        }
+  </button>
 
-            </button>
+  <button
+    onclick="deleteProduct(
+      ${product.id},
+      '${escapeHtml(product.name)}'
+    )"
+    style="
+      width:100%;
+      margin:0;
+      background:#dc3545;
+    "
+  >
+    刪除
+    
+  </button>
+
+</div>
 
           </td>
 
@@ -873,26 +884,26 @@ document
           .trim();
 
       const priceMRaw =
-  document
-    .getElementById("productPriceM")
-    .value
-    .trim();
+        document
+          .getElementById("productPriceM")
+          .value
+          .trim();
 
-const priceLRaw =
-  document
-    .getElementById("productPriceL")
-    .value
-    .trim();
+      const priceLRaw =
+        document
+          .getElementById("productPriceL")
+          .value
+          .trim();
 
-const priceM =
-  priceMRaw === ""
-    ? null
-    : Number(priceMRaw);
+      const priceM =
+        priceMRaw === ""
+          ? null
+          : Number(priceMRaw);
 
-const priceL =
-  priceLRaw === ""
-    ? null
-    : Number(priceLRaw);
+      const priceL =
+        priceLRaw === ""
+          ? null
+          : Number(priceLRaw);
 
 
       if (!storeId) {
@@ -922,72 +933,72 @@ const priceL =
 
 
       if (
-  priceM === null &&
-  priceL === null
-) {
+        priceM === null &&
+        priceL === null
+      ) {
 
-  showAdminMessage(
-    productMessage,
-    "M / L 至少輸入一個價格",
-    "err"
-  );
+        showAdminMessage(
+          productMessage,
+          "M / L 至少輸入一個價格",
+          "err"
+        );
 
-  return;
-}
+        return;
+      }
 
-if (
-  (
-    priceM !== null &&
-    (
-      !Number.isFinite(priceM) ||
-      priceM < 0
-    )
-  ) ||
-  (
-    priceL !== null &&
-    (
-      !Number.isFinite(priceL) ||
-      priceL < 0
-    )
-  )
-) {
+      if (
+        (
+          priceM !== null &&
+          (
+            !Number.isFinite(priceM) ||
+            priceM < 0
+          )
+        ) ||
+        (
+          priceL !== null &&
+          (
+            !Number.isFinite(priceL) ||
+            priceL < 0
+          )
+        )
+      ) {
 
-  showAdminMessage(
-    productMessage,
-    "請輸入正確的 M / L 價格",
-    "err"
-  );
+        showAdminMessage(
+          productMessage,
+          "請輸入正確的 M / L 價格",
+          "err"
+        );
 
-  return;
-}
+        return;
+      }
 
 
       const { error } =
-  await supabaseClient
-    .from("products")
-    .insert({
+        await supabaseClient
+          .from("products")
+          .insert({
 
-      store_id:
-        Number(storeId),
+            store_id:
+              Number(storeId),
 
-      name:
-        name,
+            name:
+              name,
 
-      // 相容舊 price 欄位
-      // 有 L 優先使用 L，沒有 L 就使用 M
-      price:
-        priceL ?? priceM,
+            // 相容舊 price 欄位
+            // 有 L 優先使用 L，沒有 L 就使用 M
+            price:
+              priceL ?? priceM,
 
-      price_m:
-        priceM,
+            price_m:
+              priceM,
 
-      price_l:
-        priceL,
+            price_l:
+              priceL,
 
-      active:
-        true
+            active:
+              true
 
-    });
+          });
 
 
       if (error) {
@@ -1011,12 +1022,12 @@ if (
 
 
       document
-  .getElementById("productPriceM")
-  .value = "";
+        .getElementById("productPriceM")
+        .value = "";
 
-document
-  .getElementById("productPriceL")
-  .value = "";
+      document
+        .getElementById("productPriceL")
+        .value = "";
 
 
       showAdminMessage(
@@ -1086,4 +1097,61 @@ async function initAdminPage() {
   ]);
 }
 
+async function deleteProduct(
+  productId,
+  productName
+) {
+
+  const firstConfirm =
+    confirm(
+      `確定要刪除「${productName}」嗎？`
+    );
+
+  if (!firstConfirm) {
+    return;
+  }
+
+  const secondConfirm =
+    confirm(
+      `再次確認：真的要永久刪除「${productName}」嗎？\n\n此操作無法復原。`
+    );
+
+  if (!secondConfirm) {
+    return;
+  }
+
+  try {
+
+    const { error } =
+      await supabaseClient
+        .from("products")
+        .delete()
+        .eq(
+          "id",
+          productId
+        );
+
+    if (error) {
+      throw error;
+    }
+
+    alert(
+      `「${productName}」已刪除`
+    );
+
+    await loadProductsAdmin(
+      manageStore.value
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "刪除飲料失敗：" +
+      error.message
+    );
+
+  }
+}
 initAdminPage();
