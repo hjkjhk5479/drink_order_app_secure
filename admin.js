@@ -37,9 +37,10 @@ async function loadOrders() {
   overview.textContent = "載入中...";
   summaryEl.textContent = "載入中...";
 
+  // 讀取訂單
   const {
-    data,
-    error
+    data: orderData,
+    error: orderError
   } = await supabaseClient
     .from("orders")
     .select("*")
@@ -47,17 +48,52 @@ async function loadOrders() {
       ascending: false
     });
 
-  if (error) {
-    console.error(error);
+  if (orderError) {
+    console.error(orderError);
 
     overview.textContent = "讀取失敗";
     summaryEl.textContent =
-      "讀取訂單失敗：" + error.message;
+      "讀取訂單失敗：" +
+      orderError.message;
 
     return;
   }
 
-  const orders = data || [];
+  // 讀取店家資料
+  const {
+    data: storeData,
+    error: storeError
+  } = await supabaseClient
+    .from("stores")
+    .select("id,name,logo_url");
+
+  if (storeError) {
+    console.error(storeError);
+  }
+
+  const stores = storeData || [];
+
+  // 把店家名稱與 Logo 加進訂單
+  const orders = (orderData || []).map(
+    order => {
+
+      const store = stores.find(
+        s =>
+          String(s.id) ===
+          String(order.store_id)
+      );
+
+      return {
+        ...order,
+
+        store_name:
+          store?.name || "未知店家",
+
+        store_logo:
+          store?.logo_url || ""
+      };
+    }
+  );
 
   renderTable(orders);
   renderOverview(orders);
@@ -68,7 +104,7 @@ function renderTable(orders) {
   if (orders.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="9">
+        <td colspan="10">
           目前沒有訂單
         </td>
       </tr>
@@ -91,12 +127,33 @@ function renderTable(orders) {
         </td>
 
         <td>
-          ${escapeHtml(order.customer_name)}
-        </td>
+  ${escapeHtml(order.customer_name)}
+</td>
 
-        <td>
-          ${escapeHtml(order.product_name)}
-        </td>
+<td>
+  <div class="order-store">
+
+    ${order.store_logo
+        ? `
+          <img
+            src="${escapeHtml(order.store_logo)}"
+            alt=""
+            class="order-store-logo"
+          >
+        `
+        : ""
+      }
+
+    <span>
+      ${escapeHtml(order.store_name)}
+    </span>
+
+  </div>
+</td>
+
+<td>
+  ${escapeHtml(order.product_name)}
+</td>
 
         <td>
           ${escapeHtml(order.sugar)}
@@ -160,99 +217,351 @@ function renderOverview(orders) {
 }
 
 function renderSummary(orders) {
+
   if (orders.length === 0) {
-    latestSummaryText = "目前沒有訂單";
-    summaryEl.textContent = latestSummaryText;
+    latestSummaryText =
+      "目前沒有訂單";
+
+    summaryEl.textContent =
+      latestSummaryText;
+
     return;
   }
 
-  const grouped = {};
+
+  // =========================
+  // 依照店家分組
+  // =========================
+
+  const storeGroups = {};
 
   orders.forEach(order => {
 
-    const productName =
-      order.product_name;
+    const storeKey =
+      String(order.store_id || "unknown");
 
-    if (!grouped[productName]) {
-      grouped[productName] = {};
+    if (!storeGroups[storeKey]) {
+
+      storeGroups[storeKey] = {
+
+        storeName:
+          order.store_name ||
+          "未知店家",
+
+        storeLogo:
+          order.store_logo || "",
+
+        orders: []
+      };
+
     }
 
-    const detail = [
-      order.sugar,
-      order.ice,
-      order.topping_name
-        ? "+" + order.topping_name
-        : ""
-    ]
-      .filter(Boolean)
-      .join(" ");
+    storeGroups[storeKey]
+      .orders
+      .push(order);
 
-    if (!grouped[productName][detail]) {
-      grouped[productName][detail] = 0;
-    }
-
-    grouped[productName][detail] +=
-      Number(order.quantity);
   });
 
-  const lines = [];
 
-  Object.entries(grouped).forEach(
-    ([productName, details]) => {
+  // =========================
+  // 網頁顯示
+  // =========================
 
-      const productTotal =
-        Object.values(details)
-          .reduce(
-            (sum, qty) =>
-              sum + qty,
-            0
-          );
+  const htmlParts = [];
 
-      lines.push(
-        `${productName} × ${productTotal}`
-      );
+  // =========================
+  // 複製文字
+  // =========================
 
-      Object.entries(details).forEach(
-        ([detail, qty]) => {
+  const textParts = [];
 
-          lines.push(
-            `- ${detail} × ${qty}`
-          );
 
-        }
-      );
+  Object.values(
+    storeGroups
+  ).forEach(group => {
 
-      lines.push("");
-    }
-  );
+    const groupedProducts = {};
+
+    let storeCups = 0;
+    let storeAmount = 0;
+
+
+    group.orders.forEach(order => {
+
+      const productName =
+        order.product_name;
+
+      const detail = [
+        order.sugar,
+        order.ice,
+
+        order.topping_name
+          ? "+" + order.topping_name
+          : ""
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+
+      if (
+        !groupedProducts[
+          productName
+        ]
+      ) {
+
+        groupedProducts[
+          productName
+        ] = {};
+
+      }
+
+
+      if (
+        !groupedProducts[
+          productName
+        ][detail]
+      ) {
+
+        groupedProducts[
+          productName
+        ][detail] = 0;
+
+      }
+
+
+      groupedProducts[
+        productName
+      ][detail] +=
+        Number(order.quantity);
+
+
+      storeCups +=
+        Number(order.quantity);
+
+      storeAmount +=
+        Number(order.total_price);
+
+    });
+
+
+    // =========================
+    // 店家 HTML 標題
+    // =========================
+
+    htmlParts.push(`
+
+      <div class="store-summary">
+
+        <div class="store-summary-header">
+
+          ${
+            group.storeLogo
+              ? `
+                <img
+                  src="${escapeHtml(
+                    group.storeLogo
+                  )}"
+                  class="store-summary-logo"
+                  alt=""
+                >
+              `
+              : ""
+          }
+
+          <span>
+            ${escapeHtml(
+              group.storeName
+            )}
+          </span>
+
+        </div>
+
+    `);
+
+
+    // 複製文字店家標題
+    textParts.push(
+      `【${group.storeName}】`
+    );
+
+
+    // =========================
+    // 飲料分類
+    // =========================
+
+    Object.entries(
+      groupedProducts
+    ).forEach(
+      ([productName, details]) => {
+
+        const productTotal =
+          Object
+            .values(details)
+            .reduce(
+              (sum, qty) =>
+                sum + qty,
+              0
+            );
+
+
+        htmlParts.push(`
+
+          <div class="summary-product">
+
+            <strong>
+              ${escapeHtml(
+                productName
+              )}
+              ×
+              ${productTotal}
+            </strong>
+
+        `);
+
+
+        textParts.push(
+          `${productName} × ${productTotal}`
+        );
+
+
+        Object.entries(
+          details
+        ).forEach(
+          ([detail, qty]) => {
+
+            htmlParts.push(`
+
+              <div class="summary-detail">
+                ${
+                  escapeHtml(detail) ||
+                  "-"
+                }
+                ×
+                ${qty}
+              </div>
+
+            `);
+
+
+            textParts.push(
+              `- ${detail || "-"} × ${qty}`
+            );
+
+          }
+        );
+
+
+        htmlParts.push(`
+          </div>
+        `);
+
+      }
+    );
+
+
+    // =========================
+    // 店家小計
+    // =========================
+
+    htmlParts.push(`
+
+        <div class="store-summary-total">
+
+          <div>
+            店家杯數：
+            <strong>
+              ${storeCups}
+            </strong>
+          </div>
+
+          <div>
+            店家金額：
+            <strong>
+              $${storeAmount}
+            </strong>
+          </div>
+
+        </div>
+
+      </div>
+
+    `);
+
+
+    textParts.push(
+      `店家杯數：${storeCups}`
+    );
+
+    textParts.push(
+      `店家金額：$${storeAmount}`
+    );
+
+    textParts.push("");
+
+  });
+
+
+  // =========================
+  // 全部訂單合計
+  // =========================
 
   const totalCups =
     orders.reduce(
       (sum, order) =>
-        sum + Number(order.quantity),
+        sum +
+        Number(order.quantity),
       0
     );
 
   const totalAmount =
     orders.reduce(
       (sum, order) =>
-        sum + Number(order.total_price),
+        sum +
+        Number(order.total_price),
       0
     );
 
-  lines.push(
-    `總杯數：${totalCups}`
+
+  htmlParts.push(`
+
+    <div class="all-summary-total">
+
+      <div>
+        全部總杯數：
+        <strong>
+          ${totalCups}
+        </strong>
+      </div>
+
+      <div>
+        全部總金額：
+        <strong>
+          $${totalAmount}
+        </strong>
+      </div>
+
+    </div>
+
+  `);
+
+
+  textParts.push(
+    `全部總杯數：${totalCups}`
   );
 
-  lines.push(
-    `總金額：$${totalAmount}`
+  textParts.push(
+    `全部總金額：$${totalAmount}`
   );
 
+
+  // 顯示在網頁
+  summaryEl.innerHTML =
+    htmlParts.join("");
+
+
+  // 給「複製店家訂單」按鈕使用
   latestSummaryText =
-    lines.join("\n");
-
-  summaryEl.textContent =
-    latestSummaryText;
+    textParts.join("\n");
 }
 
 document
