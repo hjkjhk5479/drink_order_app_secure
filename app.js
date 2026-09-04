@@ -13,6 +13,35 @@ const toppingEl = document.getElementById("topping");
 const qtyEl = document.getElementById("quantity");
 const totalEl = document.getElementById("total");
 const msgEl = document.getElementById("message");
+const successModal =
+  document.getElementById(
+    "successModal"
+  );
+
+const successModalText =
+  document.getElementById(
+    "successModalText"
+  );
+
+const successModalBtn =
+  document.getElementById(
+    "successModalBtn"
+  );
+
+const successStoreLogo =
+  document.getElementById("successStoreLogo");
+
+successModalBtn
+  .addEventListener(
+    "click",
+    () => {
+
+      successModal
+        .classList
+        .remove("show");
+
+    }
+  );
 
 let stores = [];
 let products = [];
@@ -652,6 +681,69 @@ document
           "ok"
         );
 
+        const selectedStore =
+          stores.find(
+            store =>
+              String(store.id) ===
+              String(storeEl.value)
+          );
+
+        if (selectedStore?.logo_url) {
+          successStoreLogo.src =
+            selectedStore.logo_url;
+
+          successStoreLogo.alt =
+            selectedStore.name + " Logo";
+
+          successStoreLogo.style.display =
+            "block";
+        } else {
+          successStoreLogo.src = "";
+          successStoreLogo.style.display =
+            "none";
+        }
+
+        successModalText.innerHTML = `
+  <p>
+    店家：
+    <strong>
+      ${escapeHtml(
+          selectedStore?.name || ""
+        )}
+    </strong>
+  </p>
+
+  <p>
+    飲料：
+    <strong>
+      ${escapeHtml(
+          orderProductName
+        )}
+    </strong>
+  </p>
+
+  <p>
+    數量：
+    <strong>
+      ${quantity}
+    </strong>
+  </p>
+
+  <p>
+    總金額：
+    <strong>
+      $${totalPrice}
+    </strong>
+  </p>
+`;
+
+        successModal
+          .classList
+          .add("show");
+
+
+
+
         // =========================
         // 0.5 秒後清空
         // =========================
@@ -724,7 +816,7 @@ document
               .focus();
 
           },
-          500
+          1500
         );
 
       } catch (error) {

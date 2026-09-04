@@ -279,3 +279,153 @@ td {
 
   font-size: 17px;
 }
+
+.order-time {
+  white-space: nowrap;
+  min-width: 150px;
+}
+
+.order-product {
+  min-width: 150px;
+  font-weight: 600;
+}
+
+.order-spec {
+  min-width: 180px;
+  white-space: nowrap;
+}
+
+.order-qty {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.order-price {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.order-note {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+/* =========================
+   所有訂單表格欄位固定
+========================= */
+
+#ordersTable {
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* 表頭全部禁止換行 */
+#ordersTable th {
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+/* 時間 */
+#ordersTable th:nth-child(1),
+#ordersTable td:nth-child(1) {
+  width: 22%;
+  white-space: nowrap;
+}
+
+/* 姓名 */
+#ordersTable th:nth-child(2),
+#ordersTable td:nth-child(2) {
+  width: 7%;
+  white-space: nowrap;
+}
+
+/* 店家 */
+#ordersTable th:nth-child(3),
+#ordersTable td:nth-child(3) {
+  width: 19%;
+}
+
+/* 飲料 */
+#ordersTable th:nth-child(4),
+#ordersTable td:nth-child(4) {
+  width: 20%;
+}
+
+/* 規格 */
+#ordersTable th:nth-child(5),
+#ordersTable td:nth-child(5) {
+  width: 20%;
+}
+
+/* 數量 */
+#ordersTable th:nth-child(6),
+#ordersTable td:nth-child(6) {
+  width: 6%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 金額 */
+#ordersTable th:nth-child(7),
+#ordersTable td:nth-child(7) {
+  width: 6%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.success-modal {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(0, 0, 0, 0.45);
+
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 9999;
+
+  padding: 20px;
+}
+
+.success-modal.show {
+  display: flex;
+}
+
+.success-modal-box {
+  width: 100%;
+  max-width: 380px;
+
+  background: #fff;
+
+  border-radius: 18px;
+
+  padding: 28px;
+
+  text-align: center;
+
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.success-store-logo {
+  width: 90px;
+  height: 70px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 12px;
+}
+
+.success-modal-box h2 {
+  margin-bottom: 16px;
+}
+
+.success-modal-box p {
+  margin: 7px 0;
+}
+
+#successModalBtn {
+  margin-top: 20px;
+}

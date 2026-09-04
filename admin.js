@@ -101,10 +101,12 @@ async function loadOrders() {
 }
 
 function renderTable(orders) {
+
   if (orders.length === 0) {
+
     tbody.innerHTML = `
       <tr>
-        <td colspan="10">
+        <td colspan="7">
           目前沒有訂單
         </td>
       </tr>
@@ -113,75 +115,130 @@ function renderTable(orders) {
     return;
   }
 
-  tbody.innerHTML = orders.map(order => {
 
-    const time = new Date(
-      order.created_at
-    ).toLocaleString("zh-TW");
+  tbody.innerHTML =
+    orders.map(order => {
 
-    return `
-      <tr>
+      const time =
+        new Date(
+          order.created_at
+        ).toLocaleString(
+          "zh-TW"
+        );
 
-        <td>
-          ${time}
-        </td>
 
-        <td>
-  ${escapeHtml(order.customer_name)}
-</td>
+      // =========================
+      // 規格
+      // =========================
 
-<td>
-  <div class="order-store">
+      const specs = [
+        order.sugar,
+        order.ice,
 
-    ${order.store_logo
-        ? `
-          <img
-            src="${escapeHtml(order.store_logo)}"
-            alt=""
-            class="order-store-logo"
-          >
-        `
-        : ""
-      }
+        order.topping_name
+          ? "+" + order.topping_name
+          : null
+      ]
+        .filter(Boolean)
+        .join(" / ");
 
-    <span>
-      ${escapeHtml(order.store_name)}
-    </span>
 
-  </div>
-</td>
+      return `
 
-<td>
-  ${escapeHtml(order.product_name)}
-</td>
+        <tr>
 
-        <td>
-          ${escapeHtml(order.sugar)}
-        </td>
+          <td class="order-time">
+            ${time}
+          </td>
 
-        <td>
-          ${escapeHtml(order.ice)}
-        </td>
 
-        <td>
-          ${escapeHtml(order.topping_name || "-")}
-        </td>
+          <td>
+            ${escapeHtml(
+              order.customer_name
+            )}
+          </td>
 
-        <td>
-          ${order.quantity}
-        </td>
 
-        <td>
-          $${order.total_price}
-        </td>
+          <td>
 
-        <td>
-          ${escapeHtml(order.note || "")}
-        </td>
+            <div class="order-store">
 
-      </tr>
-    `;
-  }).join("");
+              ${
+                order.store_logo
+                  ? `
+                    <img
+                      src="${escapeHtml(
+                        order.store_logo
+                      )}"
+                      class="order-store-logo"
+                      alt=""
+                    >
+                  `
+                  : ""
+              }
+
+              <span>
+                ${escapeHtml(
+                  order.store_name
+                )}
+              </span>
+
+            </div>
+
+          </td>
+
+
+          <td class="order-product">
+
+            <div>
+              ${escapeHtml(
+                order.product_name
+              )}
+            </div>
+
+            ${
+              order.note
+                ? `
+                  <div class="order-note">
+                    備註：
+                    ${escapeHtml(
+                      order.note
+                    )}
+                  </div>
+                `
+                : ""
+            }
+
+          </td>
+
+
+          <td class="order-spec">
+
+            ${escapeHtml(
+              specs || "-"
+            )}
+
+          </td>
+
+
+          <td class="order-qty">
+
+            ${order.quantity}
+
+          </td>
+
+
+          <td class="order-price">
+
+            $${order.total_price}
+
+          </td>
+
+        </tr>
+
+      `;
+
+    }).join("");
 }
 
 function renderOverview(orders) {
