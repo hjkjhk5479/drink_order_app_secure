@@ -1,867 +1,211 @@
-const supabaseClient = supabase.createClient(
-  window.SUPABASE_URL,
-  window.SUPABASE_ANON_KEY
-);
+(() => {
+  const { client, escapeHtml, showMessage, productSizes, quantity, menuSort, readAll, withButton } = DrinkApp;
+  const el = Object.fromEntries([
+    "store", "storeLogo", "storeLogoPlaceholder", "product", "size", "topping",
+    "quantity", "quantityMinus", "quantityPlus", "total", "message", "name", "note",
+    "sugar", "ice", "submitBtn", "successModal", "successModalText", "successModalBtn", "successStoreLogo"
+  ].map(id => [id, document.getElementById(id)]));
+  let stores = [];
+  let products = [];
+  let toppings = [];
+  let menuRequest = 0;
+  let menuLoading = false;
 
-const storeEl =
-  document.getElementById("store");
-const storeLogoEl =
-  document.getElementById("storeLogo");
-const productEl = document.getElementById("product");
-const sizeEl = document.getElementById("size");
-const toppingEl = document.getElementById("topping");
-const qtyEl = document.getElementById("quantity");
-const totalEl = document.getElementById("total");
-const msgEl = document.getElementById("message");
-const successModal =
-  document.getElementById(
-    "successModal"
-  );
+  function placeholder(select, text) {
+    select.replaceChildren(new Option(text, ""));
+  }
 
-const successModalText =
-  document.getElementById(
-    "successModalText"
-  );
+  function selectedProduct() {
+    return products.find(product => String(product.id) === el.product.value);
+  }
 
-const successModalBtn =
-  document.getElementById(
-    "successModalBtn"
-  );
+  function selectedSize() {
+    return productSizes(selectedProduct()).find(item => item.size === el.size.value);
+  }
 
-const successStoreLogo =
-  document.getElementById("successStoreLogo");
+  function selectedTopping() {
+    return toppings.find(topping => String(topping.id) === el.topping.value);
+  }
 
-successModalBtn
-  .addEventListener(
-    "click",
-    () => {
+  function updateTotal() {
+    const price = selectedSize()?.price ?? 0;
+    const extra = Number(selectedTopping()?.price ?? 0);
+    el.total.textContent = `$${(price + extra) * quantity(el.quantity.value)}`;
+  }
 
-      successModal
-        .classList
-        .remove("show");
+  function updateSizeOptions() {
+    const sizes = productSizes(selectedProduct());
+    el.size.replaceChildren(...sizes.map(item =>
+      new Option(`${item.size} $${item.price}`, item.size)));
+    if (!sizes.length) placeholder(el.size, "請先選擇飲料");
+    updateTotal();
+  }
 
+  function updateStoreLogo() {
+    const store = stores.find(item => String(item.id) === el.store.value);
+    const hasLogo = Boolean(store?.logo_url);
+    if (hasLogo) {
+      el.storeLogo.src = store.logo_url;
+      el.storeLogo.alt = `${store.name} Logo`;
+    } else {
+      el.storeLogo.removeAttribute("src");
     }
-  );
-
-let stores = [];
-let products = [];
-let toppings = [];
-
-function showMessage(text, type = "ok") {
-  msgEl.className = `message ${type}`;
-  msgEl.textContent = text;
-}
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function getProductPriceText(product) {
-  const hasM =
-    product.price_m !== null &&
-    product.price_m !== undefined;
-
-  const hasL =
-    product.price_l !== null &&
-    product.price_l !== undefined;
-
-  if (hasM && hasL) {
-    return `M $${product.price_m} / L $${product.price_l}`;
+    el.storeLogo.style.display = hasLogo ? "block" : "none";
+    el.storeLogoPlaceholder.style.display = hasLogo ? "none" : "block";
   }
 
-  if (hasM) {
-    return `M $${product.price_m}`;
-  }
-
-  if (hasL) {
-    return `L $${product.price_l}`;
-  }
-
-  // 相容舊資料
-  if (
-    product.price !== null &&
-    product.price !== undefined
-  ) {
-    return `$${product.price}`;
-  }
-
-  return "價格未設定";
-}
-
-function updateSizeOptions() {
-  const product = products.find(
-    p => String(p.id) === String(productEl.value)
-  );
-
-  if (!product) {
-    sizeEl.innerHTML = `
-      <option value="" data-price="0">
-        無可選尺寸
-      </option>
-    `;
-
-    updateTotal();
-    return;
-  }
-
-  const options = [];
-
-  if (
-    product.price_m !== null &&
-    product.price_m !== undefined
-  ) {
-    options.push(`
-      <option
-        value="M"
-        data-price="${Number(product.price_m)}"
-      >
-        M $${Number(product.price_m)}
-      </option>
-    `);
-  }
-
-  if (
-    product.price_l !== null &&
-    product.price_l !== undefined
-  ) {
-    options.push(`
-      <option
-        value="L"
-        data-price="${Number(product.price_l)}"
-      >
-        L $${Number(product.price_l)}
-      </option>
-    `);
-  }
-
-  // 相容你舊的 price 欄位
-  if (
-    options.length === 0 &&
-    product.price !== null &&
-    product.price !== undefined
-  ) {
-    options.push(`
-      <option
-        value="單一價"
-        data-price="${Number(product.price)}"
-      >
-        $${Number(product.price)}
-      </option>
-    `);
-  }
-
-  if (options.length === 0) {
-    options.push(`
-      <option value="" data-price="0">
-        價格未設定
-      </option>
-    `);
-  }
-
-  sizeEl.innerHTML = options.join("");
-
-  updateTotal();
-}
-
-async function loadStores() {
-  const { data, error } = await supabaseClient
-    .from("stores")
-    .select(
-      "id,name,active,sort_order,logo_url"
-    )
-    .eq("active", true)
-    .order("sort_order", {
-      ascending: true
-    })
-    .order("name", {
-      ascending: true
-    });
-
-  if (error) {
-    return showMessage(
-      "讀取店家失敗：" + error.message,
-      "err"
-    );
-  }
-
-  stores = data || [];
-
-  if (stores.length === 0) {
-    storeEl.innerHTML =
-      `<option value="">目前沒有店家</option>`;
-
-    productEl.innerHTML =
-      `<option value="">目前沒有飲料</option>`;
-
-    sizeEl.innerHTML =
-      `<option value="">--</option>`;
-
-    totalEl.textContent = "$0";
-
-    return;
-  }
-
-
-
-  storeEl.innerHTML =
-    `<option value="">請選擇店家</option>` +
-    stores
-      .map(store => {
-        return `
-        <option value="${store.id}">
-          ${escapeHtml(store.name)}
-        </option>
-      `;
-      })
-      .join("");
-
-  productEl.innerHTML =
-    `<option value="">請先選擇店家</option>`;
-
-  sizeEl.innerHTML =
-    `<option value="" data-price="0">請先選擇飲料</option>`;
-
-  toppingEl.innerHTML =
-    `<option value="" data-price="0">不加料</option>`;
-
-  totalEl.textContent = "$0";
-
-
-}
-
-async function loadProducts(storeId) {
-  const { data, error } = await supabaseClient
-    .from("products")
-    .select(`
-      id,
-      store_id,
-      category_id,
-      name,
-      price,
-      price_m,
-      price_l,
-      active,
-      sort_order
-    `)
-    .eq("store_id", storeId)
-    .eq("active", true)
-    .order("sort_order", {
-      ascending: true
-    })
-    .order("name", {
-      ascending: true
-    });
-
-  if (error) {
-    productEl.innerHTML =
-      `<option value="">讀取失敗</option>`;
-
-    sizeEl.innerHTML =
-      `<option value="">--</option>`;
-
-    return showMessage(
-      "讀取飲料失敗：" + error.message,
-      "err"
-    );
-  }
-
-  products = data || [];
-
-  if (products.length === 0) {
-    productEl.innerHTML =
-      `<option value="">目前沒有飲料</option>`;
-
-    sizeEl.innerHTML =
-      `<option value="">--</option>`;
-
-    updateTotal();
-
-    return;
-  }
-
-  productEl.innerHTML =
-    `<option value="">請選擇飲料</option>` +
-    products
-      .map(product => {
-        return `
-        <option value="${product.id}">
-          ${escapeHtml(product.name)}
-          ｜${getProductPriceText(product)}
-        </option>
-      `;
-      })
-      .join("");
-
-  sizeEl.innerHTML =
-    `<option value="" data-price="0">請先選擇飲料</option>`;
-
-  updateTotal();
-}
-
-async function loadToppings(storeId) {
-  const { data, error } = await supabaseClient
-    .from("toppings")
-    .select("*")
-    .eq("store_id", storeId)
-    .eq("active", true)
-    .order("name");
-
-  // 如果 toppings 還沒建立，
-  // 也不影響訂飲料
-  if (error) {
-    console.warn(
-      "讀取加料失敗：",
-      error.message
-    );
-
+  async function loadMenu() {
+    const request = ++menuRequest;
+    const storeId = el.store.value;
+    products = [];
     toppings = [];
-
-    toppingEl.innerHTML = `
-      <option
-        value=""
-        data-price="0"
-      >
-        不加料
-      </option>
-    `;
-
-    updateTotal();
-
-    return;
-  }
-
-  toppings = data || [];
-
-  toppingEl.innerHTML =
-    `
-      <option
-        value=""
-        data-price="0"
-      >
-        不加料
-      </option>
-    ` +
-    toppings
-      .map(topping => {
-        return `
-          <option
-            value="${topping.id}"
-            data-price="${topping.price}"
-          >
-            ${escapeHtml(topping.name)}
-            +$${topping.price}
-          </option>
-        `;
-      })
-      .join("");
-
-  updateTotal();
-}
-
-function updateTotal() {
-  const sizeOption =
-    sizeEl.options[sizeEl.selectedIndex];
-
-  const toppingOption =
-    toppingEl.options[
-    toppingEl.selectedIndex
-    ];
-
-  const productPrice =
-    Number(
-      sizeOption?.dataset.price || 0
-    );
-
-  const toppingPrice =
-    Number(
-      toppingOption?.dataset.price || 0
-    );
-
-  const quantity =
-    Math.max(
-      1,
-      Number(qtyEl.value || 1)
-    );
-
-  const total =
-    (
-      productPrice +
-      toppingPrice
-    ) * quantity;
-
-  totalEl.textContent =
-    `$${total}`;
-}
-
-
-
-storeEl.addEventListener(
-  "change",
-  async () => {
-
+    menuLoading = Boolean(storeId);
+    placeholder(el.product, storeId ? "載入中..." : "請先選擇店家");
+    placeholder(el.size, "請先選擇飲料");
+    placeholder(el.topping, "不加料");
+    el.product.disabled = menuLoading;
+    el.topping.disabled = menuLoading;
+    showMessage(el.message, "");
     updateStoreLogo();
+    updateTotal();
+    if (!storeId) return;
 
-    if (!storeEl.value) {
-
-      productEl.innerHTML =
-        `<option value="">請先選擇店家</option>`;
-
-      sizeEl.innerHTML =
-        `<option value="" data-price="0">請先選擇飲料</option>`;
-
-      toppingEl.innerHTML =
-        `<option value="" data-price="0">不加料</option>`;
-
-      totalEl.textContent = "$0";
-
-      return;
-    }
-
-    await loadProducts(
-      storeEl.value
-    );
-
-    await loadToppings(
-      storeEl.value
-    );
-
-  }
-);
-
-
-productEl.addEventListener(
-  "change",
-  updateSizeOptions
-);
-
-sizeEl.addEventListener(
-  "change",
-  updateTotal
-);
-
-toppingEl.addEventListener(
-  "change",
-  updateTotal
-);
-
-qtyEl.addEventListener(
-  "input",
-  updateTotal
-);
-
-document
-  .getElementById("submitBtn")
-  .addEventListener(
-    "click",
-    async () => {
-
-      const submitBtn =
-        document.getElementById(
-          "submitBtn"
-        );
-
-      const name =
-        document
-          .getElementById("name")
-          .value
-          .trim();
-
-      const note =
-        document
-          .getElementById("note")
-          .value
-          .trim();
-
-      const sugar =
-        document
-          .getElementById("sugar")
-          .value;
-
-      const ice =
-        document
-          .getElementById("ice")
-          .value;
-
-      const quantity =
-        Math.max(
-          1,
-          Number(qtyEl.value || 1)
-        );
-
-
-      // =========================
-      // 基本檢查
-      // =========================
-
-      if (!name) {
-        return showMessage(
-          "請輸入訂購人姓名",
-          "err"
-        );
+    try {
+      const [productResult, toppingResult] = await Promise.allSettled([
+        readAll(() => client.from("products").select("*")
+          .eq("store_id", storeId).eq("active", true).order("id")),
+        readAll(() => client.from("toppings").select("*")
+          .eq("store_id", storeId).eq("active", true).order("id"))
+      ]);
+      // 快速切換店家時，忽略已過期的回應。
+      if (request !== menuRequest) return;
+      if (productResult.status === "rejected") throw productResult.reason;
+      products = productResult.value.sort(menuSort);
+      placeholder(el.product, products.length ? "請選擇飲料" : "目前沒有飲料");
+      for (const product of products) {
+        const prices = productSizes(product).map(item =>
+          `${item.size} $${item.price}`).join(" / ") || "價格未設定";
+        el.product.add(new Option(`${product.name}｜${prices}`, String(product.id)));
       }
-
-      // 沒選店家
-      if (!storeEl.value) {
-        return showMessage(
-          "請選擇店家",
-          "err"
-        );
-      }
-
-      // 沒選飲料
-      if (!productEl.value) {
-        return showMessage(
-          "請選擇飲料",
-          "err"
-        );
-      }
-
-      // 沒選尺寸
-      if (!sizeEl.value) {
-        return showMessage(
-          "請選擇尺寸",
-          "err"
-        );
-      }
-
-      // 沒選甜度
-      if (!sugar) {
-        return showMessage(
-          "請選擇甜度",
-          "err"
-        );
-      }
-
-      // 沒選冰塊
-      if (!ice) {
-        return showMessage(
-          "請選擇冰塊",
-          "err"
-        );
-      }
-
-      const product =
-        products.find(
-          p =>
-            String(p.id) ===
-            String(productEl.value)
-        );
-
-      const topping =
-        toppings.find(
-          t =>
-            String(t.id) ===
-            String(toppingEl.value)
-        );
-
-      if (!product) {
-        return showMessage(
-          "找不到飲料資料，請重新整理頁面",
-          "err"
-        );
-      }
-
-      const sizeOption =
-        sizeEl.options[
-        sizeEl.selectedIndex
-        ];
-
-      const size =
-        sizeOption?.value || "";
-
-      const drinkPrice =
-        Number(
-          sizeOption?.dataset.price || 0
-        );
-
-      if (drinkPrice <= 0) {
-        return showMessage(
-          "此飲料尚未設定價格",
-          "err"
-        );
-      }
-
-      const toppingPrice =
-        topping
-          ? Number(topping.price)
-          : 0;
-
-      const unitPrice =
-        drinkPrice +
-        toppingPrice;
-
-      const totalPrice =
-        unitPrice *
-        quantity;
-
-      // 因為你目前 orders
-      // 沒有獨立 size 欄位
-      // 所以先把尺寸寫進飲料名稱
-      const orderProductName =
-        size &&
-          size !== "單一價"
-          ? `${product.name} (${size})`
-          : product.name;
-
-      const payload = {
-
-        customer_name:
-          name,
-
-        store_id:
-          Number(storeEl.value),
-
-        product_id:
-          Number(productEl.value),
-
-        product_name:
-          orderProductName,
-
-        sugar:
-          sugar,
-
-        ice:
-          ice,
-
-        topping_name:
-          topping
-            ? topping.name
-            : null,
-
-        quantity:
-          quantity,
-
-        unit_price:
-          unitPrice,
-
-        total_price:
-          totalPrice,
-
-        note:
-          note
-
-      };
-
-      // =========================
-      // 送出中
-      // =========================
-
-      submitBtn.disabled = true;
-
-      submitBtn.textContent =
-        "送出中...";
-
-      msgEl.className =
-        "message";
-
-      msgEl.textContent =
-        "";
-
-      try {
-
-        const { error } =
-          await supabaseClient
-            .from("orders")
-            .insert(payload);
-
-        if (error) {
-          throw error;
+      if (toppingResult.status === "fulfilled") {
+        toppings = toppingResult.value.sort((a, b) => String(a.name).localeCompare(String(b.name), "zh-TW"));
+        for (const topping of toppings) {
+          el.topping.add(new Option(`${topping.name} +$${topping.price}`, String(topping.id)));
         }
-
-        submitBtn.textContent =
-          "✅ 訂購成功";
-
-        showMessage(
-          `訂購成功！${orderProductName} × ${quantity}，共 $${totalPrice}`,
-          "ok"
-        );
-
-        const selectedStore =
-          stores.find(
-            store =>
-              String(store.id) ===
-              String(storeEl.value)
-          );
-
-        if (selectedStore?.logo_url) {
-          successStoreLogo.src =
-            selectedStore.logo_url;
-
-          successStoreLogo.alt =
-            selectedStore.name + " Logo";
-
-          successStoreLogo.style.display =
-            "block";
-        } else {
-          successStoreLogo.src = "";
-          successStoreLogo.style.display =
-            "none";
-        }
-
-        successModalText.innerHTML = `
-  <p>
-    店家：
-    <strong>
-      ${escapeHtml(
-          selectedStore?.name || ""
-        )}
-    </strong>
-  </p>
-
-  <p>
-    飲料：
-    <strong>
-      ${escapeHtml(
-          orderProductName
-        )}
-    </strong>
-  </p>
-
-  <p>
-    數量：
-    <strong>
-      ${quantity}
-    </strong>
-  </p>
-
-  <p>
-    總金額：
-    <strong>
-      $${totalPrice}
-    </strong>
-  </p>
-`;
-
-        successModal
-          .classList
-          .add("show");
-
-
-
-
-        // =========================
-        // 0.5 秒後清空
-        // =========================
-
-        setTimeout(
-          () => {
-
-            document
-              .getElementById(
-                "name"
-              )
-              .value = "";
-
-            document
-              .getElementById(
-                "note"
-              )
-              .value = "";
-
-            qtyEl.value = 1;
-
-            if (
-              productEl
-                .options
-                .length > 0
-            ) {
-
-              productEl
-                .selectedIndex = 0;
-
-            }
-
-            updateSizeOptions();
-
-            document
-              .getElementById(
-                "sugar"
-              )
-              .selectedIndex = 0;
-
-            document
-              .getElementById(
-                "ice"
-              )
-              .selectedIndex = 0;
-
-            if (
-              toppingEl
-                .options
-                .length > 0
-            ) {
-
-              toppingEl
-                .selectedIndex = 0;
-
-            }
-
-            updateTotal();
-
-            submitBtn.disabled =
-              false;
-
-            submitBtn.textContent =
-              "送出訂單";
-
-            document
-              .getElementById(
-                "name"
-              )
-              .focus();
-
-          },
-          1500
-        );
-
-      } catch (error) {
-
-        console.error(
-          "送出訂單失敗：",
-          error
-        );
-
-        showMessage(
-          "送出失敗：" +
-          error.message,
-          "err"
-        );
-
-        submitBtn.disabled =
-          false;
-
-        submitBtn.textContent =
-          "送出訂單";
-
+      } else {
+        showMessage(el.message, "加料讀取失敗，目前僅能選擇不加料。", "err");
       }
-
+    } catch (error) {
+      if (request !== menuRequest) return;
+      placeholder(el.product, "讀取失敗，請重新選擇店家");
+      showMessage(el.message, "讀取飲料失敗：" + error.message, "err");
+    } finally {
+      if (request === menuRequest) {
+        menuLoading = false;
+        el.product.disabled = false;
+        el.topping.disabled = false;
+        updateTotal();
+      }
     }
-  );
-
-function updateStoreLogo() {
-
-  const store = stores.find(
-    s =>
-      String(s.id) ===
-      String(storeEl.value)
-  );
-
-  if (!store || !store.logo_url) {
-
-    storeLogoEl.src = "";
-    storeLogoEl.style.display = "none";
-
-    return;
   }
 
-  storeLogoEl.src = store.logo_url;
-  storeLogoEl.alt = store.name + " Logo";
-  storeLogoEl.style.display = "block";
-}
+  async function submitOrder() {
+    if (menuLoading) throw new Error("菜單載入中，請稍候");
+    const name = el.name.value.trim();
+    if (!name) throw new Error("請輸入訂購人姓名");
+    const store = stores.find(item => String(item.id) === el.store.value);
+    if (!store) throw new Error("請選擇店家");
+    const product = selectedProduct();
+    if (!product || String(product.store_id) !== el.store.value) throw new Error("請選擇飲料");
+    const size = selectedSize();
+    if (!size) throw new Error("請選擇尺寸");
+    if (!el.sugar.value) throw new Error("請選擇甜度");
+    if (!el.ice.value) throw new Error("請選擇冰塊");
+    const topping = selectedTopping();
+    if (el.topping.value && (!topping || String(topping.store_id) !== el.store.value)) {
+      throw new Error("加料資料已變更，請重新選擇");
+    }
+    const cups = quantity(el.quantity.value);
+    el.quantity.value = cups;
+    const unitPrice = size.price + Number(topping?.price ?? 0);
+    if (!Number.isSafeInteger(unitPrice) || unitPrice < 0) throw new Error("價格設定有誤");
+    const productName = size.size === "單一價" ? product.name : `${product.name} (${size.size})`;
+    const payload = {
+      customer_name: name, store_id: store.id, product_id: product.id,
+      product_name: productName, sugar: el.sugar.value, ice: el.ice.value,
+      topping_name: topping?.name ?? null, quantity: cups,
+      unit_price: unitPrice, total_price: unitPrice * cups, note: el.note.value.trim()
+    };
+    el.submitBtn.textContent = "送出中...";
+    showMessage(el.message, "");
+    // 防止送出途中修改表單，導致成功畫面與實際訂單不一致。
+    const controls = [el.store, el.product, el.size, el.topping, el.quantity,
+      el.quantityMinus, el.quantityPlus, el.name, el.note, el.sugar, el.ice];
+    const disabledStates = controls.map(control => control.disabled);
+    controls.forEach(control => { control.disabled = true; });
+    try {
+      const { error } = await client.from("orders").insert(payload);
+      if (error) throw error;
+      showMessage(el.message, `訂購成功！${productName} × ${cups}，共 $${payload.total_price}`);
+      if (store.logo_url) el.successStoreLogo.src = store.logo_url;
+      else el.successStoreLogo.removeAttribute("src");
+      el.successStoreLogo.alt = `${store.name} Logo`;
+      el.successStoreLogo.style.display = store.logo_url ? "block" : "none";
+      el.successModalText.innerHTML = [
+        ["店家", store.name], ["飲料", productName], ["數量", cups], ["總金額", `$${payload.total_price}`]
+      ].map(([label, value]) => `<p>${label}：<strong>${escapeHtml(value)}</strong></p>`).join("");
+      el.name.value = "";
+      el.note.value = "";
+      el.quantity.value = 1;
+      el.product.selectedIndex = 0;
+      el.sugar.selectedIndex = 0;
+      el.ice.selectedIndex = 0;
+      el.topping.selectedIndex = 0;
+      updateSizeOptions();
+      el.successModal.classList.add("show");
+      el.successModalBtn.focus();
+    } finally {
+      controls.forEach((control, index) => { control.disabled = disabledStates[index]; });
+      el.submitBtn.textContent = "送出訂單";
+    }
+  }
 
-loadStores();
+  el.store.addEventListener("change", loadMenu);
+  el.product.addEventListener("change", updateSizeOptions);
+  el.size.addEventListener("change", updateTotal);
+  el.topping.addEventListener("change", updateTotal);
+  el.quantity.addEventListener("input", updateTotal);
+  el.quantity.addEventListener("change", () => {
+    el.quantity.value = quantity(el.quantity.value);
+    updateTotal();
+  });
+  for (const [button, step] of [[el.quantityMinus, -1], [el.quantityPlus, 1]]) {
+    button.addEventListener("click", () => {
+      el.quantity.value = quantity(quantity(el.quantity.value) + step);
+      updateTotal();
+    });
+  }
+  el.submitBtn.addEventListener("click", () =>
+    withButton(el.submitBtn, submitOrder, error => showMessage(el.message, error.message, "err")));
+  el.successModalBtn.addEventListener("click", () => {
+    el.successModal.classList.remove("show");
+    el.name.focus();
+  });
+
+  async function init() {
+    placeholder(el.product, "請先選擇店家");
+    placeholder(el.size, "請先選擇飲料");
+    el.store.disabled = true;
+    try {
+      stores = (await readAll(() => client.from("stores").select("*")
+        .eq("active", true).order("id"))).sort(menuSort);
+      placeholder(el.store, stores.length ? "請選擇店家" : "目前沒有店家");
+      for (const store of stores) el.store.add(new Option(store.name, String(store.id)));
+    } catch (error) {
+      showMessage(el.message, "讀取店家失敗：" + error.message, "err");
+    } finally {
+      el.store.disabled = false;
+    }
+  }
+  init();
+})();

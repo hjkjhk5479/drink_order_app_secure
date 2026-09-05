@@ -26,7 +26,15 @@
 
           <div class="store-select-row">
 
-            <img id="storeLogo" class="store-logo" src="" alt="">
+            <div class="store-logo-box">
+
+              <span id="storeLogoPlaceholder">
+                🧋
+              </span>
+
+              <img id="storeLogo" class="store-logo" src="" alt="">
+
+            </div>
 
             <select id="store">
               <option value="">請選擇店家</option>
@@ -47,7 +55,20 @@
 
         <div>
           <label for="quantity">杯數</label>
-          <input id="quantity" type="number" min="1" value="1" />
+
+          <div class="quantity-control">
+
+            <button type="button" id="quantityMinus" class="quantity-btn" aria-label="減少杯數">
+              −
+            </button>
+
+            <input id="quantity" type="number" min="1" max="99" value="1" inputmode="numeric" />
+
+            <button type="button" id="quantityPlus" class="quantity-btn" aria-label="增加杯數">
+              ＋
+            </button>
+
+          </div>
         </div>
 
         <div>
@@ -94,7 +115,7 @@
 
         <div class="full">
           <button id="submitBtn">送出訂單</button>
-          <div id="message" class="message"></div>
+          <div id="message" class="message" role="status" aria-live="polite"></div>
         </div>
       </div>
     </div>
@@ -110,7 +131,7 @@
     </a>
   </div>
 
-  <div id="successModal" class="success-modal">
+  <div id="successModal" class="success-modal" role="dialog" aria-modal="true" aria-label="訂購成功">
     <div class="success-modal-box">
 
       <img id="successStoreLogo" class="success-store-logo" src="" alt="店家 Logo" />
@@ -129,9 +150,9 @@
     </div>
   </div>
 
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
+  <script src="shared.js"></script>
   <script src="app.js"></script>
 </body>
 

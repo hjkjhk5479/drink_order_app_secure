@@ -1,66 +1,34 @@
-const supabaseClient = supabase.createClient(
-  window.SUPABASE_URL,
-  window.SUPABASE_ANON_KEY
-);
+(() => {
+  const { client, showMessage, withButton } = DrinkApp;
+  const form = document.getElementById("loginForm");
+  const button = document.getElementById("loginBtn");
+  const message = document.getElementById("message");
 
-const messageEl = document.getElementById("message");
-const loginBtn = document.getElementById("loginBtn");
-
-function showMessage(text, type = "ok") {
-  messageEl.className = `message ${type}`;
-  messageEl.textContent = text;
-}
-
-async function checkAlreadyLogin() {
-  const {
-    data: { session }
-  } = await supabaseClient.auth.getSession();
-
-  if (session) {
-    window.location.replace("admin.html");
-  }
-}
-
-loginBtn.addEventListener("click", async () => {
-  const email = document
-    .getElementById("email")
-    .value
-    .trim();
-
-  const password = document
-    .getElementById("password")
-    .value;
-
-  if (!email || !password) {
-    showMessage("請輸入 Email 與密碼", "err");
-    return;
-  }
-
-  loginBtn.disabled = true;
-  loginBtn.textContent = "登入中...";
-
-  const {
-    data,
-    error
-  } = await supabaseClient.auth.signInWithPassword({
-    email: email,
-    password: password
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    withButton(button, async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      if (!email || !password) throw new Error("請輸入 Email 與密碼");
+      button.textContent = "登入中...";
+      try {
+        const { error } = await client.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        window.location.replace("admin.html");
+      } finally {
+        button.textContent = "登入";
+      }
+    }, error => showMessage(message, "登入失敗：" + error.message, "err"));
   });
 
-  if (error) {
-    showMessage("登入失敗：" + error.message, "err");
-
-    loginBtn.disabled = false;
-    loginBtn.textContent = "登入";
-
-    return;
+  async function init() {
+    try {
+      const { data, error } = await client.auth.getSession();
+      if (error) throw error;
+      if (data.session) window.location.replace("admin.html");
+    } catch (error) {
+      showMessage(message, "登入狀態檢查失敗：" + error.message, "err");
+    }
   }
-
-  showMessage("登入成功", "ok");
-
-  setTimeout(() => {
-    window.location.replace("admin.html");
-  }, 500);
-});
-
-checkAlreadyLogin();
+  init();
+})();

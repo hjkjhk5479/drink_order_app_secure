@@ -59,7 +59,6 @@
         </button>
       </div>
 
-
       <div class="table-wrap">
         <table id="ordersTable">
           <thead>
@@ -71,6 +70,7 @@
               <th>規格</th>
               <th>數量</th>
               <th>金額</th>
+              <th>操作</th>
             </tr>
           </thead>
 
@@ -96,7 +96,7 @@
 
       </div>
 
-      <div id="storeMessage" class="message"></div>
+      <div id="storeMessage" class="message" role="status" aria-live="polite"></div>
 
       <br>
 
@@ -114,7 +114,6 @@
         </table>
       </div>
     </div>
-
 
     <div class="card">
       <h2>🧋 飲料品項管理</h2>
@@ -161,7 +160,7 @@
 
       </div>
 
-      <div id="productMessage" class="message"></div>
+      <div id="productMessage" class="message" role="status" aria-live="polite"></div>
 
       <br>
 
@@ -185,6 +184,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
+  <script src="shared.js"></script>
   <script src="admin.js"></script>
 </body>
 

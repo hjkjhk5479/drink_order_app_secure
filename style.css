@@ -81,12 +81,6 @@ button.success {
   background: #059669;
 }
 
-.row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
 .badge {
   display: inline-block;
   padding: 5px 10px;
@@ -152,12 +146,6 @@ td {
   margin-bottom: 18px;
 }
 
-.topnav a {
-  color: #111827;
-  font-weight: 800;
-  text-decoration: none;
-}
-
 @media (max-width: 640px) {
   .container {
     padding: 14px;
@@ -182,25 +170,38 @@ td {
   flex: 1;
 }
 
+.store-logo-box {
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 10px;
+}
+
+#storeLogoPlaceholder {
+  font-size: 28px;
+  line-height: 1;
+}
+
 .store-logo {
   width: 48px;
   height: 48px;
+
   object-fit: contain;
 
-  border-radius: 10px;
-
-  background: #fff;
-
   display: none;
-
-  flex-shrink: 0;
 }
 
 .order-store {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 130px;
+  min-width: 0;
 }
 
 .order-store-logo {
@@ -213,8 +214,9 @@ td {
 }
 
 .order-store span {
+  min-width: 0;
   font-weight: 700;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .store-summary {
@@ -281,18 +283,17 @@ td {
 }
 
 .order-time {
-  white-space: nowrap;
-  min-width: 150px;
+  white-space: normal;
+  min-width: 0;
 }
 
 .order-product {
-  min-width: 150px;
+  min-width: 0;
   font-weight: 600;
 }
 
 .order-spec {
-  min-width: 180px;
-  white-space: nowrap;
+  min-width: 0;
 }
 
 .order-qty {
@@ -313,56 +314,51 @@ td {
 }
 
 /* =========================
-   所有訂單表格欄位固定
+   所有訂單表格
 ========================= */
 
 #ordersTable {
   width: 100%;
+  min-width: 800px;
+  max-width: 100%;
   table-layout: fixed;
-}
-
-/* 表頭全部禁止換行 */
-#ordersTable th {
-  white-space: nowrap;
-  word-break: keep-all;
+  overflow: hidden;
 }
 
 /* 時間 */
 #ordersTable th:nth-child(1),
 #ordersTable td:nth-child(1) {
-  width: 22%;
-  white-space: nowrap;
+  width: 15%;
 }
 
 /* 姓名 */
 #ordersTable th:nth-child(2),
 #ordersTable td:nth-child(2) {
-  width: 7%;
-  white-space: nowrap;
+  width: 8%;
 }
 
 /* 店家 */
 #ordersTable th:nth-child(3),
 #ordersTable td:nth-child(3) {
-  width: 19%;
+  width: 18%;
 }
 
 /* 飲料 */
 #ordersTable th:nth-child(4),
 #ordersTable td:nth-child(4) {
-  width: 20%;
+  width: 19%;
 }
 
 /* 規格 */
 #ordersTable th:nth-child(5),
 #ordersTable td:nth-child(5) {
-  width: 20%;
+  width: 17%;
 }
 
 /* 數量 */
 #ordersTable th:nth-child(6),
 #ordersTable td:nth-child(6) {
-  width: 6%;
+  width: 7%;
   text-align: center;
   white-space: nowrap;
 }
@@ -370,9 +366,23 @@ td {
 /* 金額 */
 #ordersTable th:nth-child(7),
 #ordersTable td:nth-child(7) {
-  width: 6%;
+  width: 8%;
   text-align: center;
   white-space: nowrap;
+}
+
+/* 操作 */
+#ordersTable th:nth-child(8),
+#ordersTable td:nth-child(8) {
+  width: 8%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 所有訂單表頭不要換行 */
+#ordersTable th {
+  white-space: nowrap;
+  word-break: keep-all;
 }
 
 .success-modal {
@@ -429,3 +439,105 @@ td {
 #successModalBtn {
   margin-top: 20px;
 }
+
+/* =========================
+   杯數 +/- 控制
+========================= */
+
+/* 杯數控制 */
+.quantity-control {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: 46px;
+}
+
+.quantity-control input {
+  flex: 1;
+  min-width: 0;
+
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+
+  appearance: textfield;
+}
+
+/* 隱藏 number 原生箭頭 */
+.quantity-control input::-webkit-inner-spin-button,
+.quantity-control input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ＋ / − 按鈕 */
+.quantity-btn {
+  width: 64px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  background: #f3f4f6;
+  color: #111827;
+
+  border: 1px solid #d1d5db;
+
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.quantity-btn:hover {
+  background: #e5e7eb;
+}
+
+.delete-order-btn {
+  width: 42px;
+  min-width: 42px;
+  height: 38px;
+
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #dc3545;
+  color: #fff;
+
+  border: 0;
+  border-radius: 8px;
+
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.delete-order-btn:hover {
+  background: #b02a37;
+}
+
+.order-date {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* 日期下面的小字，與備註相同風格 */
+.order-time .order-note {
+  white-space: nowrap;
+}
+button:disabled { opacity: .55; cursor: wait; }
+button.danger { background: #dc3545; }
+.management-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+#ordersTable td { overflow-wrap: anywhere; }
