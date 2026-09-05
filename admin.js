@@ -55,7 +55,7 @@
         <td class="order-qty">${html(order.quantity)}</td>
         <td class="order-price">$${html(order.total_price)}</td>
         <td><button type="button" class="delete-order-btn" data-id="${html(order.id)}"
-          title="刪除訂單" aria-label="刪除訂單">🗑️</button></td>
+          title="刪除訂單" aria-label="刪除訂單">✕</button></td>
       </tr>`;
     }).join("") : emptyRow(8, "目前沒有訂單");
 

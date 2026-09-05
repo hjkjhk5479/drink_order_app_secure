@@ -502,10 +502,9 @@ td {
 }
 
 .delete-order-btn {
-  width: 42px;
-  min-width: 42px;
+  width: 38px !important;
+  min-width: 38px;
   height: 38px;
-
   padding: 0;
 
   display: flex;
@@ -518,14 +517,16 @@ td {
   border: 0;
   border-radius: 8px;
 
-  font-size: 18px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+
   cursor: pointer;
 }
 
 .delete-order-btn:hover {
   background: #b02a37;
 }
-
 .order-date {
   font-size: 15px;
   font-weight: 600;
